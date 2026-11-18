@@ -2,8 +2,9 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
-import type { EnvironmentVariables } from './config/env.validation.js';
+import { type EnvironmentVariables, NodeEnv } from './config/env.validation.js';
 import { REQUEST_ID_HEADER } from './logging/request-id.js';
+import { setupOpenApi } from './openapi.js';
 
 // Точка входа. Выполняется один раз на процесс: собирает DI-контейнер, затем запускает HTTP-сервер.
 // После этого процесс просто ждёт запросов; event loop Node обрабатывает многие из них
@@ -30,6 +31,12 @@ async function bootstrap(): Promise<void> {
   // По SIGTERM (docker stop, деплой) Nest вызывает хуки onModuleDestroy: пул соединений с БД
   // закрывается аккуратно, а не обрывается посреди запроса.
   app.enableShutdownHooks();
+
+  // Swagger UI — инструмент разработки: в проде не раскрываем полную карту API посторонним.
+  // Типы для фронтенда генерируются из спецификации на этапе разработки/CI, а не с прод-сервера.
+  if (config.get('NODE_ENV', { infer: true }) !== NodeEnv.Production) {
+    setupOpenApi(app);
+  }
 
   await app.listen(config.get('PORT', { infer: true }));
 }

@@ -4,3 +4,5 @@ packages:
 allowBuilds:
   '@prisma/engines': true
   prisma: true
+  # Телеметрия swagger-ui-dist (postinstall шлёт статистику загрузок). Для работы не нужна.
+  '@scarf/scarf': false
