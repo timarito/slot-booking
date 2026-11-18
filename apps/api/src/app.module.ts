@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
-import { LoggerModule } from 'nestjs-pino';
+import { LoggerModule, type Params } from 'nestjs-pino';
 import { ProblemDetailsFilter } from './common/errors/problem-details.filter.js';
 import { createValidationPipe } from './common/errors/validation.js';
 import { type EnvironmentVariables, validateEnv } from './config/env.validation.js';
@@ -21,7 +21,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     // Подключается только здесь: повторный импорт в feature-модуле задвоил бы логи запросов.
     LoggerModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService<EnvironmentVariables, true>) => ({
+      useFactory: (config: ConfigService<EnvironmentVariables, true>): Params => ({
         pinoHttp: buildPinoHttpOptions({
           NODE_ENV: config.get('NODE_ENV', { infer: true }),
           LOG_LEVEL: config.get('LOG_LEVEL', { infer: true }),
