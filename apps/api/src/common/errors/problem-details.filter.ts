@@ -15,7 +15,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const request = http.getRequest<Request>();
     const response = http.getResponse<Response>();
 
-    // Только путь: в query-строке могут быть данные, которые не стоит возвращать или логировать.
+    // Только путь: query-строку не возвращаем клиенту в теле ошибки. (В лог запроса pino пишет
+    // url целиком — это полезно для отладки фильтров и пагинации; поэтому секреты в query не кладём
+    // никогда, токены идут только в заголовке и cookie.)
     const instance = request.originalUrl.split('?')[0] ?? request.originalUrl;
     const { status, body } = toProblemDetails(exception, instance);
 
