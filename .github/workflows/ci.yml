@@ -1,0 +1,91 @@
+# CI: проверяет каждый PR и каждый push в main на чистой машине GitHub.
+# Деплоя здесь нет (он появится в M6 отдельным workflow): CI только отвечает на вопрос
+# «этот код можно мёржить?». Branch protection в настройках репозитория запрещает merge,
+# пока эти джобы не зелёные.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Новый push в ту же ветку отменяет ещё идущий прогон: результат старого коммита уже не нужен.
+# В main не отменяем, чтобы у каждого коммита main был свой результат.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Минимальные права для GITHUB_TOKEN: CI только читает код. Если сторонний action окажется
+# скомпрометирован, он не сможет пушить в репозиторий или менять релизы.
+permissions:
+  contents: read
+
+jobs:
+  # Быстрые проверки без БД. Идут параллельно с e2e, поэтому общее время = самая долгая джоба.
+  checks:
+    name: Lint, typecheck, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Actions закреплены по полному SHA коммита, а не по тегу: тег можно передвинуть на другой
+      # код (так взломали tj-actions/changed-files в 2025), а SHA — нет. Версия — в комментарии.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Токен не нужен после checkout: не оставляем его в .git/config для следующих шагов.
+          persist-credentials: false
+
+      # Ставит pnpm (версия из packageManager), Node (из .nvmrc), восстанавливает кэш pnpm store
+      # и выполняет `pnpm install --frozen-lockfile`: если lockfile не совпадает с package.json,
+      # установка падает, а не молча обновляет зависимости. postinstall генерирует Prisma Client.
+      - uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
+        with:
+          cache: true
+          require-lockfile: true
+
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  # E2E на настоящем Postgres: та же мажорная версия, что в docker-compose.yml.
+  e2e:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      # Service-контейнер живёт столько же, сколько джоба. GitHub ждёт, пока health check
+      # станет healthy, и только потом запускает шаги.
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: slot_booking
+          POSTGRES_PASSWORD: slot_booking # одноразовая БД внутри CI, не секрет
+          POSTGRES_DB: slot_booking
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U slot_booking -d slot_booking"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    # .env в CI нет (он в .gitignore), поэтому конфиг приходит из переменных окружения —
+    # ровно так, как будет в проде. validateEnv проверит их при старте AppModule.
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://slot_booking:slot_booking@localhost:5432/slot_booking
+      CORS_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/setup@731dfb6463bbd11c11fd0ee11fe00ed0e36d48a1 # v3.2.0
+        with:
+          cache: true
+          require-lockfile: true
+
+      # Та же команда, что будет применять миграции при деплое: заодно проверяем, что они
+      # накатываются на пустую БД. Пока миграций нет — шаг ничего не делает.
+      - run: pnpm --filter @slot-booking/api prisma:deploy
+      - run: pnpm test:e2e
