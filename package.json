@@ -2,5 +2,12 @@
   "name": "slot-booking",
   "private": true,
   "packageManager": "pnpm@12.21.0",
-  "engines": { "node": ">=26" }
+  "engines": { "node": ">=26" },
+  "scripts": {
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "api:dev": "pnpm --filter @slot-booking/api start:dev",
+    "api:build": "pnpm --filter @slot-booking/api build",
+    "typecheck": "pnpm -r typecheck"
+  }
 }

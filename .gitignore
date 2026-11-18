@@ -7,3 +7,7 @@ coverage/
 !.env.example
 .idea/
 *.log
+
+# Prisma generated client (rebuilt by `prisma generate` on install)
+apps/api/src/generated/
+*.tsbuildinfo

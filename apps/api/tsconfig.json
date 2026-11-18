@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    // Node ESM: imports of local files need the ".js" extension (resolved after compilation).
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "ES2023",
+    "strict": true,
+    // NestJS DI reads constructor parameter types at runtime via decorator metadata.
+    // Without these two flags `constructor(private config: ConfigService)` would not be injected.
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    // DTO/entity classes get their fields from decorators/frameworks, not constructors.
+    "strictPropertyInitialization": false,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "incremental": true,
+    "types": ["node"]
+  },
+  "include": ["src", "prisma7.config.ts"]
+}

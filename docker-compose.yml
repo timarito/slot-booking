@@ -1,0 +1,25 @@
+# Local development infrastructure. The API itself runs on the host (pnpm dev) for fast reloads;
+# only stateful services live in containers.
+services:
+  postgres:
+    # Pinned major version: a minor bump is safe, a major one needs a data migration (pg_upgrade).
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: slot_booking
+      POSTGRES_PASSWORD: slot_booking # local-only credentials, never reused anywhere else
+      POSTGRES_DB: slot_booking
+    ports:
+      # Bound to localhost only, so the DB is not exposed to the local network.
+      - '127.0.0.1:5432:5432'
+    volumes:
+      # Named volume: data survives `docker compose down` (removed only with `down -v`).
+      # Since the postgres 18 image the volume is mounted at /var/lib/postgresql (not .../data).
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U slot_booking -d slot_booking']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

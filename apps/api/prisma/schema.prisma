@@ -1,0 +1,15 @@
+// Database schema: the single description of tables from which Prisma generates
+// SQL migrations and a typed client. Models (User, Resource, Booking...) are added
+// milestone by milestone, starting with M2 (auth). See docs/spec.md, section 3.
+
+generator client {
+  // "prisma-client" is the Prisma 7 generator: plain TS output into our own source tree,
+  // instead of the old hidden node_modules/.prisma folder.
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  // The connection URL lives in prisma7.config.ts (CLI) and in PrismaService (runtime).
+  provider = "postgresql"
+}
