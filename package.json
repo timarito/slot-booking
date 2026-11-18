@@ -1,0 +1,6 @@
+{
+  "name": "slot-booking",
+  "private": true,
+  "packageManager": "pnpm@12.21.0",
+  "engines": { "node": ">=26" }
+}
