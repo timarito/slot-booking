@@ -20,5 +20,7 @@
     "incremental": true,
     "types": ["node"]
   },
-  "include": ["src", "prisma.config.ts"]
+  // test/ and vitest configs are included so typecheck and type-aware linting cover them;
+  // the build (tsconfig.build.json) still compiles src/ only.
+  "include": ["src", "test", "prisma.config.ts", "vitest.config*.ts"]
 }

@@ -11,6 +11,8 @@
     "api:dev": "pnpm --filter @slot-booking/api start:dev",
     "api:build": "pnpm --filter @slot-booking/api build",
     "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm -r test:e2e",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
