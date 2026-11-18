@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { HealthController } from './health.controller.js';
 
-// Builds a Nest module with the real controller and a fake DB. This is what DI buys us:
-// the controller code is untouched, only the provider registered under PrismaService changes.
+// Собирает Nest-модуль с настоящим контроллером и фейковой БД. Вот что даёт DI:
+// код контроллера не меняется, подменяется только провайдер, зарегистрированный как PrismaService.
 async function createController(queryRaw: () => Promise<unknown>): Promise<HealthController> {
   const moduleRef = await Test.createTestingModule({
     controllers: [HealthController],

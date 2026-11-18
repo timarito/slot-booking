@@ -2,8 +2,8 @@ import { HttpStatus, ValidationPipe, type ValidationError } from '@nestjs/common
 import { AppException, type FieldError } from './problem-details.js';
 
 /**
- * class-validator returns a TREE of errors (nested DTOs, arrays). The client needs a flat list
- * with dot paths it can map onto form fields: `workingHours.0.openTime`.
+ * class-validator возвращает ДЕРЕВО ошибок (вложенные DTO, массивы). Клиенту нужен плоский список
+ * с путями через точку, который можно сопоставить с полями формы: `workingHours.0.openTime`.
  */
 export function flattenValidationErrors(errors: ValidationError[], parentPath = ''): FieldError[] {
   return errors.flatMap((error) => {
@@ -15,9 +15,9 @@ export function flattenValidationErrors(errors: ValidationError[], parentPath = 
 }
 
 /**
- * The global ValidationPipe: validates every @Body()/@Query()/@Param() DTO before the handler runs.
- * Its only customization here is the error shape — `validation-error` with `errors[]` (spec.md, 7).
- * DTO-related options (whitelist, transform...) will be decided with the first DTOs in M2.
+ * Глобальный ValidationPipe: валидирует каждый DTO из @Body()/@Query()/@Param() до вызова обработчика.
+ * Единственная настройка здесь — форма ошибки: `validation-error` с `errors[]` (spec.md, раздел 7).
+ * Опции, связанные с DTO (whitelist, transform...), решим вместе с первыми DTO в M2.
  */
 export function createValidationPipe(): ValidationPipe {
   return new ValidationPipe({

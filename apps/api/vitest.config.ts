@@ -1,12 +1,12 @@
 import { defineConfig } from 'vitest/config';
 
-// Unit tests: fast, no database, no network. Live next to the code as *.spec.ts.
+// Unit-тесты: быстрые, без БД и сети. Лежат рядом с кодом как *.spec.ts.
 export default defineConfig({
   test: {
     include: ['src/**/*.spec.ts'],
-    // The Reflect metadata polyfill is loaded implicitly by @nestjs/core at runtime.
-    // Unit tests that don't import Nest (e.g. env validation via class-transformer)
-    // still rely on it, so load it once per test file, exactly like the app does.
+    // Полифил Reflect metadata в рантайме неявно загружает @nestjs/core.
+    // Unit-тесты, которые не импортируют Nest (например, валидация env через class-transformer),
+    // тоже от него зависят, поэтому грузим его один раз на тестовый файл — так же, как приложение.
     setupFiles: ['reflect-metadata'],
   },
 });

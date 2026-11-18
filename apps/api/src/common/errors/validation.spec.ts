@@ -2,7 +2,7 @@ import type { ValidationError } from '@nestjs/common';
 import { describe, expect, it } from 'vitest';
 import { flattenValidationErrors } from './validation.js';
 
-// Builds the minimal shape class-validator produces.
+// Собирает минимальную структуру ошибки, которую возвращает class-validator.
 function error(
   property: string,
   constraints?: Record<string, string>,

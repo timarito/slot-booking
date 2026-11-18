@@ -8,6 +8,6 @@ coverage/
 .idea/
 *.log
 
-# Prisma generated client (rebuilt by `prisma generate` on install)
+# Сгенерированный клиент Prisma (пересоздаётся `prisma generate` при установке)
 apps/api/src/generated/
 *.tsbuildinfo

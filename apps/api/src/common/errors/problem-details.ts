@@ -2,46 +2,46 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { STATUS_CODES } from 'node:http';
 
 // RFC 9457 "Problem Details for HTTP APIs": https://www.rfc-editor.org/rfc/rfc9457
-// One machine-readable shape for every error, so the client handles errors in one place.
+// Единая машиночитаемая форма для всех ошибок, чтобы клиент обрабатывал их в одном месте.
 
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json';
 
 export interface FieldError {
-  /** Dot path to the invalid field, e.g. `workingHours.0.openTime`. */
+  /** Путь к невалидному полю через точку, например `workingHours.0.openTime`. */
   field: string;
   message: string;
 }
 
 export interface ProblemDetails {
-  /** URI reference identifying the problem type; stable, documented per `code`. */
+  /** URI-ссылка на тип проблемы; стабильная, документируется для каждого `code`. */
   type: string;
-  /** Short human-readable summary of the problem type (same for every occurrence). */
+  /** Короткое описание типа проблемы для человека (одинаковое для всех случаев этого типа). */
   title: string;
-  /** HTTP status code, duplicated in the body for clients that lose the status line. */
+  /** HTTP-статус, продублированный в теле для клиентов, которые теряют строку статуса. */
   status: number;
-  /** Human-readable explanation of this specific occurrence. */
+  /** Пояснение для человека к этому конкретному случаю. */
   detail?: string;
-  /** The request path this occurrence relates to. */
+  /** Путь запроса, к которому относится этот случай. */
   instance: string;
-  /** Extension member: the key the frontend maps to a UI message (spec.md, section 7). */
+  /** Поле-расширение: ключ, который фронтенд маппит на сообщение в UI (spec.md, раздел 7). */
   code: string;
-  /** Extension member: present only for validation errors. */
+  /** Поле-расширение: есть только у ошибок валидации. */
   errors?: FieldError[];
 }
 
 interface AppExceptionOptions {
-  /** Defaults to the HTTP reason phrase of `status`. */
+  /** По умолчанию — стандартная фраза HTTP-статуса (reason phrase). */
   title?: string;
   detail?: string;
   errors?: FieldError[];
 }
 
 /**
- * The exception services throw for expected, domain-level failures:
+ * Исключение, которое сервисы бросают при ожидаемых доменных ошибках:
  * `throw new AppException(HttpStatus.CONFLICT, 'booking-conflict', { detail: '...' })`.
  *
- * It extends HttpException so the rest of Nest (and any code checking `instanceof HttpException`)
- * still treats it as an HTTP error with a known status.
+ * Наследует HttpException, чтобы остальной Nest (и любой код с проверкой
+ * `instanceof HttpException`) по-прежнему считал его HTTP-ошибкой с известным статусом.
  */
 export class AppException extends HttpException {
   readonly title?: string;
@@ -60,15 +60,15 @@ export class AppException extends HttpException {
   }
 }
 
-/** The result of mapping any thrown value: what to send and whether it's our fault (5xx). */
+/** Результат маппинга любого брошенного значения: статус и тело ответа. */
 export interface ProblemResponse {
   status: number;
   body: ProblemDetails;
 }
 
 /**
- * Maps anything that can be thrown to a Problem Details response.
- * A pure function on purpose: all the decisions live here and are unit-tested without Nest/HTTP.
+ * Превращает всё, что может быть брошено, в ответ Problem Details.
+ * Намеренно чистая функция: все решения живут здесь и тестируются unit-тестами без Nest и HTTP.
  */
 export function toProblemDetails(exception: unknown, instance: string): ProblemResponse {
   if (exception instanceof AppException) {
@@ -83,18 +83,18 @@ export function toProblemDetails(exception: unknown, instance: string): ProblemR
     };
   }
 
-  // Nest's built-in exceptions (NotFoundException for unknown routes, our 503 in /health,
-  // 400 for malformed JSON...). Their code is derived from the status: 404 -> "not-found".
-  // Their messages are NOT passed on as `detail`: they are not written for clients and may echo
-  // request input (Nest's 404 is "Cannot GET /path?query", JSON parse errors quote the body).
-  // Rule: `detail` only ever contains text we wrote deliberately, i.e. from AppException.
+  // Встроенные исключения Nest (NotFoundException для неизвестного маршрута, наш 503 в /health,
+  // 400 для некорректного JSON...). Их code выводится из статуса: 404 -> "not-found".
+  // Их сообщения НЕ передаются в `detail`: они написаны не для клиента и могут отражать входные
+  // данные запроса (404 в Nest — "Cannot GET /path?query", ошибки парсинга JSON цитируют тело).
+  // Правило: в `detail` попадает только текст, написанный нами намеренно, то есть из AppException.
   if (exception instanceof HttpException) {
     const status = exception.getStatus();
     return { status, body: buildProblem(status, codeFromStatus(status), instance, {}) };
   }
 
-  // Anything else is a bug or an infrastructure failure. Never leak its message or stack
-  // to the client: they can contain SQL, file paths or secrets. The filter logs the details.
+  // Всё остальное — баг или сбой инфраструктуры. Сообщение и стек никогда не уходят клиенту:
+  // в них может быть SQL, пути к файлам или секреты. Подробности логирует фильтр.
   const status = HttpStatus.INTERNAL_SERVER_ERROR;
   return {
     status,

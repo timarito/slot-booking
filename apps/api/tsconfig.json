@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    // Node ESM: imports of local files need the ".js" extension (resolved after compilation).
+    // Node ESM: импорты локальных файлов требуют расширения ".js" (разрешаются после компиляции).
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "target": "ES2023",
     "strict": true,
-    // NestJS DI reads constructor parameter types at runtime via decorator metadata.
-    // Without these two flags `constructor(private config: ConfigService)` would not be injected.
+    // DI в NestJS читает типы параметров конструктора в рантайме через метаданные декораторов.
+    // Без этих двух флагов `constructor(private config: ConfigService)` не будет внедрён.
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    // DTO/entity classes get their fields from decorators/frameworks, not constructors.
+    // Поля DTO и сущностей заполняют декораторы и фреймворки, а не конструкторы.
     "strictPropertyInitialization": false,
     "esModuleInterop": true,
     "isolatedModules": true,
@@ -20,7 +20,7 @@
     "incremental": true,
     "types": ["node"]
   },
-  // test/ and vitest configs are included so typecheck and type-aware linting cover them;
-  // the build (tsconfig.build.json) still compiles src/ only.
+  // test/ и конфиги vitest включены, чтобы typecheck и type-aware линтинг их покрывали;
+  // сборка (tsconfig.build.json) по-прежнему компилирует только src/.
   "include": ["src", "test", "prisma.config.ts", "vitest.config*.ts"]
 }

@@ -2,10 +2,10 @@ import { type ArgumentsHost, Catch, type ExceptionFilter, Logger } from '@nestjs
 import type { Request, Response } from 'express';
 import { PROBLEM_CONTENT_TYPE, toProblemDetails } from './problem-details.js';
 
-// @Catch() with no arguments catches EVERYTHING thrown while handling a request:
-// our AppException, Nest's HttpExceptions and unexpected errors (bugs, DB down).
-// The filter stays thin: mapping lives in toProblemDetails(), the filter only does HTTP I/O.
-// Registered globally in AppModule via APP_FILTER (see there for why not in main.ts).
+// @Catch() без аргументов ловит ВСЁ, что брошено при обработке запроса:
+// наш AppException, HttpException из Nest и непредвиденные ошибки (баги, недоступная БД).
+// Фильтр тонкий: маппинг живёт в toProblemDetails(), фильтр занимается только вводом-выводом HTTP.
+// Подключён глобально в AppModule через APP_FILTER (почему не в main.ts — см. там).
 @Catch()
 export class ProblemDetailsFilter implements ExceptionFilter {
   private readonly logger = new Logger(ProblemDetailsFilter.name);
@@ -15,12 +15,12 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const request = http.getRequest<Request>();
     const response = http.getResponse<Response>();
 
-    // Path only: the query string may carry data we don't want echoed back or logged.
+    // Только путь: в query-строке могут быть данные, которые не стоит возвращать или логировать.
     const instance = request.originalUrl.split('?')[0] ?? request.originalUrl;
     const { status, body } = toProblemDetails(exception, instance);
 
-    // 4xx are the client's problem and expected; 5xx are ours and need investigating.
-    // The stack goes to the log only, never to the client.
+    // 4xx — проблема клиента и ожидаемое поведение; 5xx — наша проблема, её надо расследовать.
+    // Стек идёт только в лог и никогда — клиенту.
     if (status >= 500) {
       this.logger.error(
         `${request.method} ${instance} -> ${status}`,
@@ -28,7 +28,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       );
     }
 
-    // type() must come before json(): Express only sets application/json if no type is set.
+    // type() обязательно до json(): Express ставит application/json, только если тип ещё не задан.
     response.status(status).type(PROBLEM_CONTENT_TYPE).json(body);
   }
 }

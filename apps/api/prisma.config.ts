@@ -1,5 +1,6 @@
-// Prisma CLI config (migrate, generate, studio). Used by tooling only, never at app runtime.
-// Since Prisma 7 the CLI does not read .env by itself, hence the explicit dotenv import.
+// Конфиг Prisma CLI (migrate, generate, studio). Используется только инструментами,
+// в рантайме приложения не участвует.
+// С Prisma 7 CLI сам не читает .env, поэтому dotenv импортируется явно.
 import 'dotenv/config';
 import { defineConfig } from 'prisma/config';
 

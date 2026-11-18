@@ -1,14 +1,14 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 
-// Health check for Docker/orchestrators/load balancers: "can this instance serve traffic?"
-// It checks the DB because an API without its DB is useless — the balancer should stop
-// routing requests here. Deliberately cheap: it may be called every few seconds.
+// Health check для Docker, оркестраторов и балансировщиков: «может ли этот инстанс принимать трафик?»
+// Проверяет БД, потому что API без своей БД бесполезен: балансировщик должен перестать слать
+// сюда запросы. Намеренно дешёвый: его могут вызывать каждые несколько секунд.
 @Controller('health')
 export class HealthController {
-  // Constructor injection: Nest sees the PrismaService type (via decorator metadata)
-  // and passes the single shared instance. Compare: Vue's provide/inject, but resolved
-  // automatically by type and wired at startup.
+  // Внедрение через конструктор: Nest видит тип PrismaService (через метаданные декораторов)
+  // и передаёт единственный общий экземпляр. Сравни с provide/inject во Vue: здесь зависимость
+  // находится автоматически по типу и связывается при старте.
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
@@ -16,7 +16,7 @@ export class HealthController {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
     } catch {
-      // 503 = "temporarily can't serve", the conventional status for a failed health check.
+      // 503 = «временно не могу обслуживать» — общепринятый статус для упавшего health check.
       throw new ServiceUnavailableException('Database is unreachable');
     }
     return { status: 'ok' };

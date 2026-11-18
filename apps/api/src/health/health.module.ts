@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { HealthController } from './health.controller.js';
 
-// A feature module groups everything for one area (controllers + services).
-// Future modules follow the same shape: auth/, resources/, bookings/.
+// Feature-модуль объединяет всё, что относится к одной области (контроллеры + сервисы).
+// Будущие модули устроены так же: auth/, resources/, bookings/.
 @Module({
   controllers: [HealthController],
 })

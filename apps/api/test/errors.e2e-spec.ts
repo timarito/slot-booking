@@ -7,8 +7,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 import type { ProblemDetails } from '../src/common/errors/problem-details.js';
 
-// Test-only endpoints to drive the real global pipe and filter through HTTP.
-// They exist only inside this testing module, never in the app.
+// Эндпоинты только для тестов: прогоняют настоящие глобальные pipe и фильтр через HTTP.
+// Существуют только внутри этого тестового модуля, в приложении их нет.
 class ProbeDto {
   @IsEmail()
   email: string;
@@ -39,7 +39,7 @@ describe('Error responses (e2e)', () => {
       imports: [AppModule],
       controllers: [ProbeController],
     }).compile();
-    // logger: false keeps the expected 500 stack trace out of the test output.
+    // logger: false убирает ожидаемый стек 500-й ошибки из вывода тестов.
     app = moduleRef.createNestApplication({ logger: false });
     await app.init();
   });
@@ -82,7 +82,7 @@ describe('Error responses (e2e)', () => {
       .expect(400)
       .expect('Content-Type', /application\/problem\+json/);
 
-    // supertest types the body as `any`; assert our contract explicitly.
+    // supertest типизирует тело как `any`; явно указываем наш контракт.
     const body = response.body as ProblemDetails;
     expect(body).toMatchObject({
       type: '/problems/validation-error',

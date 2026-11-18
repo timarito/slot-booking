@@ -5,22 +5,22 @@ import type { App } from 'supertest/types.js';
 import { afterAll, beforeAll, describe, it } from 'vitest';
 import { AppModule } from '../src/app.module.js';
 
-// Boots the real AppModule: real config validation, real PrismaService, real Postgres.
-// Note: settings applied in main.ts (CORS, shutdown hooks) are NOT part of AppModule,
-// so they are not covered here.
+// Поднимает настоящий AppModule: реальная валидация конфига, реальный PrismaService, реальный Postgres.
+// Важно: настройки из main.ts (CORS, shutdown hooks) не входят в AppModule,
+// поэтому здесь они не проверяются.
 describe('GET /health (e2e)', () => {
-  // The generic types getHttpServer(); without it the server is `any`.
+  // Дженерик типизирует getHttpServer(); без него сервер — `any`.
   let app: INestApplication<App>;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
-    // init() runs lifecycle hooks (PrismaService connects) without opening a port:
-    // supertest talks to the HTTP server object directly.
+    // init() запускает хуки жизненного цикла (PrismaService подключается), не открывая порт:
+    // supertest работает с объектом HTTP-сервера напрямую.
     await app.init();
   });
 
-  // Without close() the DB pool stays open and the test process never exits.
+  // Без close() пул соединений с БД остаётся открытым, и процесс теста не завершается.
   afterAll(async () => {
     await app.close();
   });

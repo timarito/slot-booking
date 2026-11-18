@@ -4,24 +4,24 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client.js';
 import type { EnvironmentVariables } from '../config/env.validation.js';
 
-// One PrismaClient per process. It owns a connection POOL (pg.Pool via the adapter):
-// a request borrows a connection for the duration of a query and returns it.
-// Creating a client per request would open a new TCP connection + auth handshake
-// each time and quickly exhaust Postgres' max_connections (default 100).
+// Один PrismaClient на процесс. Он владеет ПУЛОМ соединений (pg.Pool через адаптер):
+// запрос берёт соединение на время выполнения SQL и возвращает его обратно.
+// Если создавать клиент на каждый запрос, каждый раз будет новое TCP-соединение и аутентификация,
+// и мы быстро упрёмся в max_connections Postgres (по умолчанию 100).
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(config: ConfigService<EnvironmentVariables, true>) {
-    // Prisma 7 talks to the DB through a "driver adapter" — here the node-postgres driver.
+    // Prisma 7 работает с БД через «driver adapter» — здесь это драйвер node-postgres.
     const adapter = new PrismaPg({ connectionString: config.get('DATABASE_URL', { infer: true }) });
     super({ adapter });
   }
 
-  // Connect eagerly at startup: a wrong DATABASE_URL fails the boot, not the first user.
+  // Подключаемся сразу при старте: неверный DATABASE_URL уронит запуск, а не первого пользователя.
   async onModuleInit(): Promise<void> {
     await this.$connect();
   }
 
-  // Close the pool on shutdown (needs app.enableShutdownHooks() in main.ts).
+  // Закрываем пул при остановке (нужен app.enableShutdownHooks() в main.ts).
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
   }

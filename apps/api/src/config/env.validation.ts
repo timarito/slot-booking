@@ -1,8 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import { IsEnum, IsInt, IsString, IsUrl, Max, Min, validateSync } from 'class-validator';
 
-// Fail fast: the app must refuse to start with a broken config rather than crash
-// on the first request that happens to need a missing variable (spec, section 9).
+// Fail fast: с битым конфигом приложение должно отказаться стартовать, а не упасть на первом
+// запросе, которому понадобилась отсутствующая переменная (spec.md, раздел 9).
 
 export enum NodeEnv {
   Development = 'development',
@@ -19,7 +19,7 @@ export class EnvironmentVariables {
   @Max(65535)
   PORT: number = 3000;
 
-  // Not @IsUrl: class-validator's URL check rejects "postgresql://" schemes by default.
+  // Не @IsUrl: проверка URL в class-validator по умолчанию отклоняет схему "postgresql://".
   @IsString()
   DATABASE_URL: string;
 
@@ -27,9 +27,9 @@ export class EnvironmentVariables {
   CORS_ORIGIN: string;
 }
 
-// Called by ConfigModule with the raw process.env (all values are strings).
+// Вызывается ConfigModule с «сырым» process.env (все значения — строки).
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
-  // enableImplicitConversion turns "3000" into 3000 based on the declared field type.
+  // enableImplicitConversion превращает "3000" в 3000 по объявленному типу поля.
   const validated = plainToInstance(EnvironmentVariables, config, {
     enableImplicitConversion: true,
   });

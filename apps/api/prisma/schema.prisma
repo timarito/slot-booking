@@ -1,15 +1,15 @@
-// Database schema: the single description of tables from which Prisma generates
-// SQL migrations and a typed client. Models (User, Resource, Booking...) are added
-// milestone by milestone, starting with M2 (auth). See docs/spec.md, section 3.
+// Схема БД — единое описание таблиц, из которого Prisma генерирует SQL-миграции
+// и типизированный клиент. Модели (User, Resource, Booking...) добавляются по вехам,
+// начиная с M2 (аутентификация). См. docs/spec.md, раздел 3.
 
 generator client {
-  // "prisma-client" is the Prisma 7 generator: plain TS output into our own source tree,
-  // instead of the old hidden node_modules/.prisma folder.
+  // "prisma-client" — генератор Prisma 7: обычный TS-код в нашем дереве исходников,
+  // вместо старой скрытой папки node_modules/.prisma.
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  // The connection URL lives in prisma.config.ts (CLI) and in PrismaService (runtime).
+  // URL подключения задаётся в prisma.config.ts (для CLI) и в PrismaService (в рантайме).
   provider = "postgresql"
 }

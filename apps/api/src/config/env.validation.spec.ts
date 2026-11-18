@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { NodeEnv, validateEnv } from './env.validation.js';
 
-// process.env values are always strings, so the fixtures are strings too.
+// Значения process.env всегда строки, поэтому и фикстуры — строки.
 const validEnv = {
   NODE_ENV: 'development',
   PORT: '3000',
