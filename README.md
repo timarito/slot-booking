@@ -18,13 +18,13 @@ Fullstack service for booking shared resources (meeting rooms, coworking desks) 
 
 ## Tech stack
 
-| Area | Tools |
-|---|---|
-| Monorepo | pnpm workspaces, TypeScript (strict) |
+| Area                  | Tools                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------- |
+| Monorepo              | pnpm workspaces, TypeScript (strict)                                                   |
 | Frontend (`apps/web`) | React, Vite, React Router, TanStack Query, Zustand, React Hook Form, Zod, Tailwind CSS |
-| Backend (`apps/api`) | NestJS, PostgreSQL, Prisma, Swagger/OpenAPI |
-| Testing | Vitest, React Testing Library, MSW, Playwright |
-| Infra | Docker Compose, GitHub Actions |
+| Backend (`apps/api`)  | NestJS, PostgreSQL, Prisma, Swagger/OpenAPI                                            |
+| Testing               | Vitest, React Testing Library, MSW, Playwright                                         |
+| Infra                 | Docker Compose, GitHub Actions                                                         |
 
 ## Repository structure
 
