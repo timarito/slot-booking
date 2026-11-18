@@ -10,6 +10,6 @@ generator client {
 }
 
 datasource db {
-  // The connection URL lives in prisma7.config.ts (CLI) and in PrismaService (runtime).
+  // The connection URL lives in prisma.config.ts (CLI) and in PrismaService (runtime).
   provider = "postgresql"
 }
