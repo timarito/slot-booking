@@ -16,11 +16,18 @@ export function flattenValidationErrors(errors: ValidationError[], parentPath = 
 
 /**
  * Глобальный ValidationPipe: валидирует каждый DTO из @Body()/@Query()/@Param() до вызова обработчика.
- * Единственная настройка здесь — форма ошибки: `validation-error` с `errors[]` (spec.md, раздел 7).
- * Опции, связанные с DTO (whitelist, transform...), решим вместе с первыми DTO в M2.
+ * Ошибка — `validation-error` с `errors[]` (spec.md, раздел 7).
  */
 export function createValidationPipe(): ValidationPipe {
   return new ValidationPipe({
+    // Поля без декораторов валидации не просто отбрасываются (whitelist), а дают 400:
+    // защита от mass assignment — `{ "role": "admin" }` в теле регистрации не должно
+    // молча дойти до БД, а клиент с опечаткой в имени поля сразу увидит ошибку.
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    // Обработчик получает экземпляр DTO с результатами @Transform (trim, lower case),
+    // а не исходный JSON. Без этого нормализация работала бы только для валидации.
+    transform: true,
     exceptionFactory: (errors) =>
       new AppException(HttpStatus.BAD_REQUEST, 'validation-error', {
         title: 'Validation failed',

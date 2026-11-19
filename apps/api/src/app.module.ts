@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_PIPE } from '@nestjs/core';
 import { LoggerModule, type Params } from 'nestjs-pino';
+import { AuthModule } from './auth/auth.module.js';
 import { ProblemDetailsFilter } from './common/errors/problem-details.filter.js';
 import { createValidationPipe } from './common/errors/validation.js';
 import { type EnvironmentVariables, validateEnv } from './config/env.validation.js';
@@ -30,6 +31,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     }),
     PrismaModule,
     HealthModule,
+    AuthModule,
   ],
   providers: [
     // Глобальные фильтр и pipe подключены здесь, а не через app.useGlobalFilters() в main.ts:
