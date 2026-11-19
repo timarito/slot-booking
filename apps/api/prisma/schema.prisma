@@ -13,3 +13,38 @@ datasource db {
   // URL подключения задаётся в prisma.config.ts (для CLI) и в PrismaService (в рантайме).
   provider = "postgresql"
 }
+
+// Соглашения для всех моделей:
+// - В БД имена в snake_case и таблицы во множественном числе (@map/@@map): Postgres приводит
+//   неквотированные имена к нижнему регистру, и ручной SQL (CHECK, EXCLUDE) пишется без кавычек.
+// - id — UUID v7: неугадываемый (нельзя перебрать соседние id), но растёт по времени, поэтому
+//   вставки идут в конец B-tree индекса PK. Тип uuid (16 байт), а не text.
+// - Время — только @db.Timestamptz(3): без этого Prisma создаёт timestamp БЕЗ зоны, и значения
+//   молча съезжают, если сессия БД не в UTC. (3) — миллисекунды, как у JS Date.
+// - Строки с лимитом из спеки — varchar(n): основная проверка в DTO, а БД — последняя линия обороны.
+
+enum UserRole {
+  admin
+  member
+
+  @@map("user_role")
+}
+
+// Ограничения, которые Prisma не умеет описывать, добавлены SQL-ом в миграции *_add_users:
+// - users_email_lowercase: CHECK (email = lower(email)).
+model User {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  // Уникален без учёта регистра: сервис приводит email к trim + lower case и при регистрации,
+  // и при входе, а CHECK в БД не даёт записать его в другом регистре в обход сервиса.
+  email        String   @unique @db.VarChar(254)
+  // Строка argon2id: соль и параметры хеширования хранятся внутри неё, отдельные колонки не нужны.
+  passwordHash String   @map("password_hash")
+  name         String   @db.VarChar(100)
+  // Дефолт в БД: забытое поле при вставке создаст участника, а не админа.
+  role         UserRole @default(member)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  // Проставляет клиент Prisma при update(), а не БД: обновление сырым SQL его не изменит.
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("users")
+}
