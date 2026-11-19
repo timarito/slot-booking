@@ -6,3 +6,7 @@ allowBuilds:
   prisma: true
   # Телеметрия swagger-ui-dist (postinstall шлёт статистику загрузок). Для работы не нужна.
   '@scarf/scarf': false
+  # Нативный модуль, но в пакете уже есть готовые бинарники (prebuilds/) для linux/darwin/win,
+  # включая musl для Alpine. Install-скрипт только пытается собрать из исходников через node-gyp,
+  # поэтому не запускаем его: меньше чужого кода при установке, не нужен компилятор в Docker.
+  argon2: false
