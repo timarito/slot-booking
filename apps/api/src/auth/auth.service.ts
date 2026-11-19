@@ -1,17 +1,36 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { AppException } from '../common/errors/problem-details.js';
 import { UserRole } from '../generated/prisma/client.js';
 import { isUniqueViolation } from '../prisma/prisma-errors.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import type { LoginDto } from './dto/login.dto.js';
 import type { RegisterDto } from './dto/register.dto.js';
 import { USER_DTO_SELECT, type UserDto } from './dto/user.dto.js';
 import { PasswordHasher } from './password-hasher.js';
+import { SessionsService } from './sessions.service.js';
+
+/** Claims access-токена (spec.md, 5.1): `sub` — id пользователя (стандартный claim RFC 7519). */
+export interface AccessTokenPayload {
+  sub: string;
+  role: UserRole;
+}
+
+export interface LoginResult {
+  accessToken: string;
+  user: UserDto;
+  /** Уходит в cookie, не в тело ответа: это решает контроллер. */
+  refreshToken: string;
+  refreshTokenExpiresAt: Date;
+}
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly passwordHasher: PasswordHasher,
+    private readonly jwt: JwtService,
+    private readonly sessions: SessionsService,
   ) {}
 
   /**
@@ -41,5 +60,40 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Проверяет учётные данные и открывает новую сессию.
+   * Неверный email и неверный пароль неотличимы ни по ответу, ни по времени (spec.md, 5.1).
+   */
+  async login({ email, password }: LoginDto): Promise<LoginResult> {
+    const found = await this.prisma.user.findUnique({
+      where: { email },
+      // Единственное место, где хеш читается из БД: он нужен для проверки и дальше не уходит.
+      select: { ...USER_DTO_SELECT, passwordHash: true },
+    });
+
+    // Проверка выполняется ВСЕГДА, даже если пользователь не найден (см. PasswordHasher.verify):
+    // ранний `if (!found) throw` вернул бы ответ в десятки раз быстрее и выдал бы,
+    // что такого email нет.
+    const passwordMatches = await this.passwordHasher.verify(found?.passwordHash, password);
+    if (!found || !passwordMatches) {
+      throw new AppException(HttpStatus.UNAUTHORIZED, 'invalid-credentials', {
+        title: 'Invalid credentials',
+        detail: 'The email or password is incorrect.',
+      });
+    }
+
+    const { passwordHash: _passwordHash, ...user } = found;
+    const payload: AccessTokenPayload = { sub: user.id, role: user.role };
+    const accessToken = await this.jwt.signAsync(payload);
+    const refresh = await this.sessions.create(user.id);
+
+    return {
+      accessToken,
+      user,
+      refreshToken: refresh.token,
+      refreshTokenExpiresAt: refresh.expiresAt,
+    };
   }
 }

@@ -8,6 +8,7 @@ import {
   IsUrl,
   Max,
   Min,
+  MinLength,
   validateSync,
 } from 'class-validator';
 
@@ -45,6 +46,25 @@ export class EnvironmentVariables {
 
   @IsUrl({ require_tld: false })
   CORS_ORIGIN: string;
+
+  // Секрет подписи access-токенов (HS256). Кто его знает, может выпустить токен от имени
+  // любого пользователя, включая админа. Минимум 32 символа: для HMAC-SHA256 ключ должен быть
+  // не короче 256 бит, иначе его реально подобрать перебором по одному перехваченному токену.
+  @IsString()
+  @MinLength(32)
+  JWT_ACCESS_SECRET: string;
+
+  // Короткая жизнь access-токена — единственное, что ограничивает ущерб от его кражи:
+  // отозвать выданный JWT нельзя, он проверяется только по подписи и сроку.
+  @IsInt()
+  @Min(1)
+  @Max(60)
+  JWT_ACCESS_TTL_MINUTES: number = 15;
+
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  REFRESH_TOKEN_TTL_DAYS: number = 30;
 
   // Необязательная: по умолчанию зависит от NODE_ENV (см. DEFAULT_LOG_LEVEL). Нужна, чтобы
   // временно включить debug в проде без пересборки — только перезапуском с другим env.

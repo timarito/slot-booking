@@ -1,5 +1,6 @@
+import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { argon2id, hash } from 'argon2';
+import { argon2id, hash, verify } from 'argon2';
 
 // Базовая конфигурация OWASP для argon2id: 19 MiB памяти, 2 прохода, 1 поток
 // (https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
@@ -21,8 +22,28 @@ const ARGON2_OPTIONS = {
  */
 @Injectable()
 export class PasswordHasher {
+  // Хеш случайного пароля, который никто не знает. Нужен, чтобы вход с несуществующим email
+  // тратил столько же времени, сколько вход с неверным паролем (см. verify).
+  // Считается один раз при создании провайдера, а не на первом запросе: иначе первый такой
+  // запрос был бы вдвое медленнее и всё равно выдавал бы разницу.
+  private readonly dummyHash: Promise<string> = this.hash(randomBytes(32).toString('hex'));
+
   /** Соль генерируется случайно на каждый вызов и хранится внутри результата. */
   hash(password: string): Promise<string> {
     return hash(password, ARGON2_OPTIONS);
+  }
+
+  /**
+   * Проверяет пароль против хеша. `undefined` означает «пользователь не найден»: тогда проверка
+   * всё равно выполняется (против dummyHash) и возвращает false. Без этого ответ для чужого email
+   * приходил бы за ~1 мс, а для существующего — за ~30 мс, и по времени ответа можно было бы
+   * перебором выяснить, какие email зарегистрированы (user enumeration через тайминг-атаку).
+   */
+  async verify(passwordHash: string | undefined, password: string): Promise<boolean> {
+    if (passwordHash === undefined) {
+      await verify(await this.dummyHash, password);
+      return false;
+    }
+    return verify(passwordHash, password);
   }
 }

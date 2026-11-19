@@ -451,7 +451,7 @@ ALTER TABLE bookings ADD CONSTRAINT bookings_no_overlap
 | ----------------------------------------- | ------------ | --------------------------------- |
 | `DATABASE_URL`                            | —            | Строка подключения к Postgres     |
 | `JWT_ACCESS_SECRET`                       | —            | Секрет подписи access-токена      |
-| `JWT_ACCESS_TTL`                          | `15m`        |                                   |
+| `JWT_ACCESS_TTL_MINUTES`                  | `15`         |                                   |
 | `REFRESH_TOKEN_TTL_DAYS`                  | `30`         |                                   |
 | `MAX_ACTIVE_BOOKINGS_PER_USER`            | `5`          | Только для участников             |
 | `CANCELLATION_CUTOFF_MINUTES`             | `60`         | Только для участников             |

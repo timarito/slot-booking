@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
-import { normalizeEmail } from '../normalize-email.js';
+import { toNormalizedEmail } from '../normalize-email.js';
 
 // @Transform выполняется ДО валидации (ValidationPipe сначала превращает JSON в экземпляр класса),
 // поэтому проверки длины видят уже нормализованное значение: имя из одних пробелов станет ''
@@ -11,9 +11,7 @@ const trim = ({ value }: { value: unknown }): unknown =>
 
 export class RegisterDto {
   @ApiProperty({ example: 'bob@example.com', maxLength: 254 })
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? normalizeEmail(value) : value,
-  )
+  @Transform(toNormalizedEmail)
   @IsEmail()
   // 254 — практический максимум длины адреса (RFC 5321: путь до 256 октетов минус <>).
   // @IsEmail (validator.js) уже отклоняет более длинные адреса; @MaxLength делает лимит явным

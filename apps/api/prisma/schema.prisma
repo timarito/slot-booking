@@ -46,5 +46,33 @@ model User {
   // Проставляет клиент Prisma при update(), а не БД: обновление сырым SQL его не изменит.
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  sessions Session[]
+
   @@map("users")
+}
+
+// Одна строка на каждый выданный refresh-токен (spec.md, 3.2).
+model Session {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  // CASCADE: сессия без пользователя бессмысленна.
+  userId    String    @map("user_id") @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // SHA-256 от токена, сам токен не хранится: утёкший дамп БД не даёт войти.
+  // Не argon2: токен — 32 случайных байта, перебор невозможен, а для поиска по
+  // `WHERE token_hash = ...` хеш обязан быть детерминированным (без соли).
+  tokenHash String    @unique @map("token_hash")
+  // Общий для всех токенов, полученных ротацией от одного входа. Отдельной таблицы
+  // у семьи нет: кроме id ей нечего хранить.
+  familyId  String    @map("family_id") @db.Uuid
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(3)
+  // NULL — активна. Отозванную строку не удаляем: повторное предъявление её токена —
+  // признак кражи, и его нужно отличить от просто неизвестного токена.
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  // Postgres не создаёт индексы для FK сам. user_id — для каскадного удаления и будущего
+  // «выйти со всех устройств», family_id — для отзыва всей семьи.
+  @@index([userId])
+  @@index([familyId])
+  @@map("sessions")
 }

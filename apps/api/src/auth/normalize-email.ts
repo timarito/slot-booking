@@ -10,3 +10,11 @@
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
+
+/**
+ * То же для `@Transform` в DTO. Нестроковое значение пропускаем как есть:
+ * его отклонит валидатор типа (@IsEmail / @IsString) с понятной ошибкой.
+ */
+export function toNormalizedEmail({ value }: { value: unknown }): unknown {
+  return typeof value === 'string' ? normalizeEmail(value) : value;
+}
