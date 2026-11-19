@@ -85,7 +85,8 @@ jobs:
           cache: true
           require-lockfile: true
 
-      # Та же команда, что будет применять миграции при деплое: заодно проверяем, что они
-      # накатываются на пустую БД. Пока миграций нет — шаг ничего не делает.
+      # Та же команда, что будет применять миграции при деплое: проверяем, что они накатываются
+      # на пустую БД (DATABASE_URL выше). Сами e2e-тесты работают в отдельной базе
+      # slot_booking_test: её создаёт и мигрирует globalSetup (apps/api/test/support).
       - run: pnpm --filter @slot-booking/api prisma:deploy
       - run: pnpm test:e2e
