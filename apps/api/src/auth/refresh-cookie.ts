@@ -1,6 +1,8 @@
-import type { CookieOptions } from 'express';
+import type { CookieOptions, Request } from 'express';
 
 export const REFRESH_COOKIE_NAME = 'refresh_token';
+/** Имя security scheme в OpenAPI (openapi.ts) для эндпоинтов, которые читают refresh-cookie. */
+export const REFRESH_COOKIE_SECURITY = 'refresh-cookie';
 
 /**
  * Флаги cookie с refresh-токеном (spec.md, 5.1). Каждый закрывает свою атаку:
@@ -19,4 +21,16 @@ export function refreshCookieOptions(expiresAt: Date): CookieOptions {
     path: '/auth',
     expires: expiresAt,
   };
+}
+
+/**
+ * Значение refresh-cookie из запроса (req.cookies заполняет cookie-parser).
+ * В типах Express это Record<string, any>, поэтому проверяем, что пришла именно строка:
+ * пустая или «не та» cookie считается отсутствующей.
+ */
+export function readRefreshCookie(req: Request): string | undefined {
+  const value: unknown = (req.cookies as Record<string, unknown> | undefined)?.[
+    REFRESH_COOKIE_NAME
+  ];
+  return typeof value === 'string' && value !== '' ? value : undefined;
 }

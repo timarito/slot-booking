@@ -10,19 +10,10 @@ import type { LoginResponseDto } from '../src/auth/dto/login-response.dto.js';
 import { hashRefreshToken } from '../src/auth/refresh-token.js';
 import type { ProblemDetails } from '../src/common/errors/problem-details.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { refreshCookie } from './support/refresh-cookie.js';
 import { resetDatabase } from './support/reset-database.js';
 
 const credentials = { email: 'bob@example.com', password: 'password1' };
-
-/** Достаёт cookie с refresh-токеном из заголовков ответа: значение и атрибуты по отдельности. */
-function refreshCookie(setCookie: string[] | string | undefined) {
-  const header = [setCookie ?? []].flat().find((cookie) => cookie.startsWith('refresh_token='));
-  if (header === undefined) {
-    throw new Error('refresh_token cookie was not set');
-  }
-  const [pair = '', ...attributes] = header.split(';').map((part) => part.trim());
-  return { value: pair.slice('refresh_token='.length), attributes };
-}
 
 describe('POST /auth/login (e2e)', () => {
   let app: INestApplication<App>;

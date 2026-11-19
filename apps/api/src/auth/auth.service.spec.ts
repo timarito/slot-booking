@@ -27,6 +27,8 @@ async function createService(
     create?: (args: unknown) => Promise<unknown>;
     findUnique?: (args: unknown) => Promise<unknown>;
     verify?: (hash: string | undefined, password: string) => Promise<boolean>;
+    rotate?: (token: string) => Promise<unknown>;
+    findUserById?: (args: unknown) => Promise<unknown>;
   } = {},
 ) {
   const fakes = {
@@ -37,6 +39,8 @@ async function createService(
     createSession: vi.fn((_userId: string) =>
       Promise.resolve({ token: 'refresh-token', expiresAt: refreshExpiresAt }),
     ),
+    rotate: vi.fn(overrides.rotate ?? (() => Promise.resolve(null))),
+    findUserById: vi.fn(overrides.findUserById ?? (() => Promise.resolve(publicUser))),
   };
 
   const moduleRef = await Test.createTestingModule({
@@ -44,14 +48,23 @@ async function createService(
       AuthService,
       {
         provide: PrismaService,
-        useValue: { user: { create: fakes.create, findUnique: fakes.findUnique } },
+        useValue: {
+          user: {
+            create: fakes.create,
+            findUnique: fakes.findUnique,
+            findUniqueOrThrow: fakes.findUserById,
+          },
+        },
       },
       {
         provide: PasswordHasher,
         useValue: { hash: (p: string) => Promise.resolve(`hashed:${p}`), verify: fakes.verify },
       },
       { provide: JwtService, useValue: { signAsync: fakes.signAsync } },
-      { provide: SessionsService, useValue: { create: fakes.createSession } },
+      {
+        provide: SessionsService,
+        useValue: { create: fakes.createSession, rotate: fakes.rotate },
+      },
     ],
   }).compile();
 
@@ -174,5 +187,63 @@ describe('AuthService.login', () => {
     });
     expect(verify).toHaveBeenCalledWith(undefined, 'password1');
     expect(createSession).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthService.refresh', () => {
+  const rotated = {
+    userId: publicUser.id,
+    token: 'rotated-refresh-token',
+    expiresAt: refreshExpiresAt,
+  };
+
+  it('rotates the token and returns a new pair for the current user', async () => {
+    const { service, rotate, findUserById } = await createService({
+      rotate: () => Promise.resolve(rotated),
+    });
+
+    const result = await service.refresh('old-refresh-token');
+
+    expect(rotate).toHaveBeenCalledWith('old-refresh-token');
+    expect(findUserById).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: publicUser.id } }),
+    );
+    expect(result).toEqual({
+      accessToken: `jwt:${JSON.stringify({ sub: publicUser.id, role: 'member' })}`,
+      user: publicUser,
+      refreshToken: 'rotated-refresh-token',
+      refreshTokenExpiresAt: refreshExpiresAt,
+    });
+  });
+
+  // Роль берётся из БД на момент refresh, а не переносится из старого access-токена.
+  it('signs the access token with the role read from the database', async () => {
+    const { service, signAsync } = await createService({
+      rotate: () => Promise.resolve(rotated),
+      findUserById: () => Promise.resolve({ ...publicUser, role: 'admin' }),
+    });
+
+    await service.refresh('old-refresh-token');
+
+    expect(signAsync).toHaveBeenCalledWith({ sub: publicUser.id, role: 'admin' });
+  });
+
+  it('rejects a token that cannot be rotated with 401 refresh-token-invalid', async () => {
+    const { service, signAsync } = await createService({ rotate: () => Promise.resolve(null) });
+
+    await expect(service.refresh('revoked-token')).rejects.toMatchObject({
+      code: 'refresh-token-invalid',
+      status: HttpStatus.UNAUTHORIZED,
+    });
+    expect(signAsync).not.toHaveBeenCalled();
+  });
+
+  it('rejects a missing cookie without touching sessions', async () => {
+    const { service, rotate } = await createService();
+
+    await expect(service.refresh(undefined)).rejects.toMatchObject({
+      code: 'refresh-token-invalid',
+    });
+    expect(rotate).not.toHaveBeenCalled();
   });
 });

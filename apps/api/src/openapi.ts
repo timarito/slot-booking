@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import { REFRESH_COOKIE_NAME, REFRESH_COOKIE_SECURITY } from './auth/refresh-cookie.js';
 import { PROBLEM_DETAILS_MODELS, problemResponse } from './common/errors/problem-details.schema.js';
 
 // Путь Swagger UI. JSON-спецификация — по `${OPENAPI_PATH}-json` (так по умолчанию в @nestjs/swagger).
@@ -21,6 +22,9 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
       status: 'default',
       ...problemResponse('Error (RFC 9457 Problem Details).'),
     })
+    // Схема «аутентификация cookie»: эндпоинты с @ApiCookieAuth(REFRESH_COOKIE_SECURITY)
+    // помечаются в документе как требующие refresh-cookie.
+    .addCookieAuth(REFRESH_COOKIE_NAME, { type: 'apiKey' }, REFRESH_COOKIE_SECURITY)
     .build();
 
   return SwaggerModule.createDocument(app, config, { extraModels: PROBLEM_DETAILS_MODELS });

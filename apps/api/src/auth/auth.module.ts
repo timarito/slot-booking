@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import cookieParser from 'cookie-parser';
 import type { EnvironmentVariables } from '../config/env.validation.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
@@ -30,4 +31,11 @@ import { SessionsService } from './sessions.service.js';
   controllers: [AuthController],
   providers: [AuthService, PasswordHasher, SessionsService],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  // cookie-parser разбирает заголовок Cookie в req.cookies. Подключаем его middleware модуля,
+  // а не app.use() в main.ts: e2e-тесты поднимают AppModule без main.ts и иначе его бы не получили.
+  // Только для AuthController: cookie с Path=/auth и так приходит только сюда.
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(cookieParser()).forRoutes(AuthController);
+  }
+}
