@@ -1,0 +1,33 @@
+// Код приложения (браузер). Компилирует не tsc, а Vite (через esbuild/Oxc): tsc здесь только
+// проверяет типы (noEmit), поэтому настройки — под бандлер, а не под Node, как в apps/api.
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    // vite/client — типы import.meta.env и импорта ассетов (.css, .svg).
+    "types": ["vite/client"],
+    "skipLibCheck": true,
+
+    // Режим бандлера: импорты без расширений, как их разрешает Vite. Сравни с nodenext в api,
+    // где нужен ".js": там файлы выполняет Node, здесь — собирает бандлер.
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    // Бандлер транспилирует каждый файл отдельно, не зная типов соседних файлов. Эти два флага
+    // запрещают конструкции, которые так собрать нельзя: импорт типа без `import type` и enum/namespace.
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    // arr[i] имеет тип T | undefined: индекс может выйти за границы, и TS заставит это проверить.
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,7 @@
+// Solution-style конфиг: сам ничего не компилирует, только ссылается на два проекта
+// с разными окружениями. Код приложения работает в браузере (DOM, без Node), а vite.config.ts —
+// в Node (без DOM). Один общий tsconfig разрешил бы `process.env` в коде браузера или `window` в конфиге.
+{
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+}

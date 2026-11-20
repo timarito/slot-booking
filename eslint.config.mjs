@@ -1,9 +1,10 @@
-// Единый flat config ESLint для всего монорепо. У каждого workspace свой блок
-// (apps/web добавит сюда правила для React в задаче со своим каркасом).
+// Единый flat config ESLint для всего монорепо. У каждого workspace свой блок.
 // Документация: https://eslint.org/docs/latest/use/configure/configuration-files
 //               https://typescript-eslint.io/getting-started/typed-linting
 import js from '@eslint/js';
 import prettier from 'eslint-config-prettier';
+import reactHooks from 'eslint-plugin-react-hooks';
+import { reactRefresh } from 'eslint-plugin-react-refresh';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -42,6 +43,33 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
     },
+  },
+
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    extends: [
+      // Правила хуков: rules-of-hooks (хуки только на верхнем уровне компонента), exhaustive-deps
+      // (полные массивы зависимостей) и правила чистоты рендера из React Compiler. Сам компилятор
+      // выключен (CLAUDE.md), но его правила ловят те же ошибки, что ломают ручную мемоизацию.
+      reactHooks.configs.flat.recommended,
+      // Fast Refresh (HMR без потери состояния) работает, только если модуль экспортирует
+      // одни компоненты. Иначе Vite перезагружает страницу целиком — правило предупреждает об этом.
+      reactRefresh.configs.vite(),
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
+    // vite.config.ts выполняется в Node, а не в браузере.
+    files: ['apps/web/vite.config.ts'],
+    languageOptions: { globals: globals.node },
   },
 
   // Обычные JS-конфиги (как этот) не входят ни в один tsconfig — линтим их без типов.
