@@ -12,6 +12,7 @@
     "api:build": "pnpm --filter @slot-booking/api build",
     "web:dev": "pnpm --filter @slot-booking/web dev",
     "web:build": "pnpm --filter @slot-booking/web build",
+    "openapi:generate": "pnpm --filter @slot-booking/api openapi:export && pnpm --filter @slot-booking/web openapi:types",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",

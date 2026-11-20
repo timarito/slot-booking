@@ -11,7 +11,13 @@ import tseslint from 'typescript-eslint';
 export default tseslint.config(
   {
     // Результаты сборки и сгенерированный код линтить не нам.
-    ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**', 'apps/api/src/generated/**'],
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      '**/node_modules/**',
+      'apps/api/src/generated/**',
+      'apps/web/src/api/schema.d.ts',
+    ],
   },
 
   js.configs.recommended,

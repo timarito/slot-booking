@@ -47,6 +47,11 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # Контракт в git должен совпадать с кодом: перегенерируем openapi.json и типы фронтенда
+      # и падаем, если что-то изменилось. Значит, DTO поменяли, а `pnpm openapi:generate` забыли —
+      # и фронтенд компилировался против устаревших типов.
+      - run: pnpm openapi:generate
+      - run: git diff --exit-code -- apps/api/openapi.json apps/web/src/api/schema.d.ts
 
   # E2E на настоящем Postgres: та же мажорная версия, что в docker-compose.yml.
   e2e:

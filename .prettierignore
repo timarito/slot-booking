@@ -2,3 +2,6 @@ pnpm-lock.yaml
 **/dist
 **/coverage
 apps/api/src/generated
+# Сгенерированный контракт: формат задают генераторы, CI сравнивает файлы с их выводом побайтно.
+apps/api/openapi.json
+apps/web/src/api/schema.d.ts

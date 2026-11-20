@@ -21,5 +21,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     // Тот же явный стиль, что в apps/api: describe/it/expect импортируются, а не глобальные.
     globals: false,
+    // Тесты не читают локальный .env: адрес API фиксированный, запросы всё равно перехватываются.
+    env: { VITE_API_URL: 'http://api.test' },
   },
 });
