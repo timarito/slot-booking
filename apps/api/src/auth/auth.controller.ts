@@ -23,6 +23,7 @@ import {
   readRefreshCookie,
   refreshCookieOptions,
 } from './refresh-cookie.js';
+import { Public } from './public.decorator.js';
 
 const SET_REFRESH_COOKIE_HEADER = {
   'Set-Cookie': {
@@ -33,7 +34,10 @@ const SET_REFRESH_COOKIE_HEADER = {
 
 // Контроллер тонкий: принимает HTTP, отдаёт сервису уже провалидированный DTO.
 // Валидацию делает глобальный ValidationPipe до вызова метода, ошибки форматирует глобальный фильтр.
+// @Public() на весь контроллер: сюда приходят как раз без access-токена (получить его, обновить
+// или завершить сессию). refresh и logout аутентифицируются refresh-cookie, а не Bearer.
 @ApiTags('auth')
+@Public()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

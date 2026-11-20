@@ -5,6 +5,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../src/app.module.js';
+import { Public } from '../src/auth/public.decorator.js';
 import type { ProblemDetails } from '../src/common/errors/problem-details.js';
 
 // Эндпоинты только для тестов: прогоняют настоящие глобальные pipe и фильтр через HTTP.
@@ -18,6 +19,8 @@ class ProbeDto {
   name: string;
 }
 
+// @Public(): тест проверяет pipe и фильтр, а не аутентификацию.
+@Public()
 @Controller('__probe')
 class ProbeController {
   @Post('validate')

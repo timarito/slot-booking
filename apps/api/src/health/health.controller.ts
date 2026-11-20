@@ -1,13 +1,16 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger';
 import { problemResponse } from '../common/errors/problem-details.schema.js';
+import { Public } from '../auth/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { HealthStatusDto } from './health-status.dto.js';
 
 // Health check для Docker, оркестраторов и балансировщиков: «может ли этот инстанс принимать трафик?»
 // Проверяет БД, потому что API без своей БД бесполезен: балансировщик должен перестать слать
 // сюда запросы. Намеренно дешёвый: его могут вызывать каждые несколько секунд.
+// Публичный: Docker и балансировщик не имеют токенов.
 @ApiTags('health')
+@Public()
 @Controller('health')
 export class HealthController {
   // Внедрение через конструктор: Nest видит тип PrismaService (через метаданные декораторов)

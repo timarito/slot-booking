@@ -1,10 +1,13 @@
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import cookieParser from 'cookie-parser';
 import type { EnvironmentVariables } from '../config/env.validation.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { MeController } from './me.controller.js';
 import { PasswordHasher } from './password-hasher.js';
 import { SessionsService } from './sessions.service.js';
 
@@ -28,8 +31,16 @@ import { SessionsService } from './sessions.service.js';
       }),
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, PasswordHasher, SessionsService],
+  controllers: [AuthController, MeController],
+  providers: [
+    AuthService,
+    PasswordHasher,
+    SessionsService,
+    // APP_GUARD делает guard глобальным для всего приложения, где бы он ни был объявлен.
+    // Объявлен здесь, потому что ему нужен JwtService этого модуля; через DI, а не
+    // app.useGlobalGuards() в main.ts, — чтобы e2e-тесты (AppModule без main.ts) его получили.
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+  ],
 })
 export class AuthModule implements NestModule {
   // cookie-parser разбирает заголовок Cookie в req.cookies. Подключаем его middleware модуля,

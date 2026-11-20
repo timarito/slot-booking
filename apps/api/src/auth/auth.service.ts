@@ -125,6 +125,26 @@ export class AuthService {
     }
   }
 
+  /**
+   * Текущий пользователь для `GET /me`. Читаем из БД, а не отдаём claims токена: в токене только
+   * id и роль, а клиенту нужны имя и email. Пользователя могли удалить, пока access-токен ещё
+   * жив, — тогда тот же 401, что и для плохого токена: клиент попробует refresh, тот не пройдёт
+   * (сессии удалены каскадом), и пользователь попадёт на логин.
+   */
+  async me(userId: string): Promise<UserDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: USER_DTO_SELECT,
+    });
+    if (!user) {
+      throw new AppException(HttpStatus.UNAUTHORIZED, 'unauthorized', {
+        title: 'Unauthorized',
+        detail: 'The user no longer exists.',
+      });
+    }
+    return user;
+  }
+
   private async issueAccessToken(user: UserDto, refresh: IssuedRefreshToken): Promise<AuthResult> {
     const payload: AccessTokenPayload = { sub: user.id, role: user.role };
     return {

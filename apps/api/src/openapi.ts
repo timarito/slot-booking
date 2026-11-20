@@ -24,6 +24,8 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     })
     // Схема «аутентификация cookie»: эндпоинты с @ApiCookieAuth(REFRESH_COOKIE_SECURITY)
     // помечаются в документе как требующие refresh-cookie.
+    // Схема «Bearer JWT»: эндпоинты с @ApiBearerAuth() требуют access-токен в Authorization.
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' })
     .addCookieAuth(REFRESH_COOKIE_NAME, { type: 'apiKey' }, REFRESH_COOKIE_SECURITY)
     .build();
 

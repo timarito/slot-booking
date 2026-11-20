@@ -269,3 +269,28 @@ describe('AuthService.logout', () => {
     expect(revokeFamilyOf).not.toHaveBeenCalled();
   });
 });
+
+describe('AuthService.me', () => {
+  it('returns the public fields of the user from the token', async () => {
+    const { service, findUnique } = await createService({
+      findUnique: () => Promise.resolve(publicUser),
+    });
+
+    await expect(service.me(publicUser.id)).resolves.toEqual(publicUser);
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { id: publicUser.id },
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
+    });
+  });
+
+  // Токен ещё жив, а пользователя уже удалили: это не 404 (ресурс «я» не может не существовать),
+  // а «вы больше не аутентифицированы».
+  it('throws 401 unauthorized when the user no longer exists', async () => {
+    const { service } = await createService();
+
+    await expect(service.me(publicUser.id)).rejects.toMatchObject({
+      code: 'unauthorized',
+      status: HttpStatus.UNAUTHORIZED,
+    });
+  });
+});
