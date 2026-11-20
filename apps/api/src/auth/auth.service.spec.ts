@@ -40,6 +40,7 @@ async function createService(
       Promise.resolve({ token: 'refresh-token', expiresAt: refreshExpiresAt }),
     ),
     rotate: vi.fn(overrides.rotate ?? (() => Promise.resolve(null))),
+    revokeFamilyOf: vi.fn((_token: string) => Promise.resolve()),
     findUserById: vi.fn(overrides.findUserById ?? (() => Promise.resolve(publicUser))),
   };
 
@@ -63,7 +64,11 @@ async function createService(
       { provide: JwtService, useValue: { signAsync: fakes.signAsync } },
       {
         provide: SessionsService,
-        useValue: { create: fakes.createSession, rotate: fakes.rotate },
+        useValue: {
+          create: fakes.createSession,
+          rotate: fakes.rotate,
+          revokeFamilyOf: fakes.revokeFamilyOf,
+        },
       },
     ],
   }).compile();
@@ -245,5 +250,22 @@ describe('AuthService.refresh', () => {
       code: 'refresh-token-invalid',
     });
     expect(rotate).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthService.logout', () => {
+  it('revokes the family of the presented refresh token', async () => {
+    const { service, revokeFamilyOf } = await createService();
+
+    await service.logout('refresh-token');
+
+    expect(revokeFamilyOf).toHaveBeenCalledWith('refresh-token');
+  });
+
+  it('succeeds without a cookie and touches no sessions', async () => {
+    const { service, revokeFamilyOf } = await createService();
+
+    await expect(service.logout(undefined)).resolves.toBeUndefined();
+    expect(revokeFamilyOf).not.toHaveBeenCalled();
   });
 });

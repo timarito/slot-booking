@@ -4,6 +4,13 @@ export const REFRESH_COOKIE_NAME = 'refresh_token';
 /** Имя security scheme в OpenAPI (openapi.ts) для эндпоинтов, которые читают refresh-cookie. */
 export const REFRESH_COOKIE_SECURITY = 'refresh-cookie';
 
+const BASE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'strict',
+  path: '/auth',
+} as const satisfies CookieOptions;
+
 /**
  * Флаги cookie с refresh-токеном (spec.md, 5.1). Каждый закрывает свою атаку:
  * - httpOnly — JS на странице не видит cookie: XSS не может украсть долгоживущий токен;
@@ -14,13 +21,16 @@ export const REFRESH_COOKIE_SECURITY = 'refresh-cookie';
  * Срок жизни cookie совпадает со сроком сессии в БД.
  */
 export function refreshCookieOptions(expiresAt: Date): CookieOptions {
-  return {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    path: '/auth',
-    expires: expiresAt,
-  };
+  return { ...BASE_OPTIONS, expires: expiresAt };
+}
+
+/**
+ * Опции для res.clearCookie(). Браузер удаляет cookie, только если совпали имя, Path и Domain,
+ * поэтому path обязателен: Express по умолчанию подставляет path '/', и cookie с Path=/auth
+ * осталась бы жить. Срок не задаём: clearCookie сам ставит Expires в прошлое.
+ */
+export function clearRefreshCookieOptions(): CookieOptions {
+  return { ...BASE_OPTIONS };
 }
 
 /**

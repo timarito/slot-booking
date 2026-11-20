@@ -4,6 +4,7 @@ import {
   ApiConflictResponse,
   ApiCookieAuth,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -18,6 +19,7 @@ import { UserDto } from './dto/user.dto.js';
 import {
   REFRESH_COOKIE_NAME,
   REFRESH_COOKIE_SECURITY,
+  clearRefreshCookieOptions,
   readRefreshCookie,
   refreshCookieOptions,
 } from './refresh-cookie.js';
@@ -85,5 +87,26 @@ export class AuthController {
     // Та же cookie с тем же Path перезаписывает старую: в браузере всегда один актуальный токен.
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, refreshCookieOptions(refreshTokenExpiresAt));
     return { accessToken, user };
+  }
+
+  // 204 — действие выполнено, возвращать нечего. Ответ всегда успешный, даже без cookie или
+  // с уже отозванным токеном: логаут идемпотентен, повторный вызов не должен пугать клиента ошибкой.
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiCookieAuth(REFRESH_COOKIE_SECURITY)
+  @ApiNoContentResponse({
+    description: 'Session ended. Always succeeds, even without a valid refresh token.',
+    headers: {
+      'Set-Cookie': {
+        description: `Clears \`${REFRESH_COOKIE_NAME}\` (expired, Path=/auth).`,
+        schema: { type: 'string' },
+      },
+    },
+  })
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
+    await this.authService.logout(readRefreshCookie(req));
+    // Главное — отзыв в БД, очистка cookie — вежливость: даже если браузер её не удалит
+    // (или клиент сохранил токен), обменять его уже не получится.
+    res.clearCookie(REFRESH_COOKIE_NAME, clearRefreshCookieOptions());
   }
 }

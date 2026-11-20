@@ -117,6 +117,21 @@ export class SessionsService {
     return null;
   }
 
+  /**
+   * Логаут: отзывает семью, к которой принадлежит токен. Неизвестный токен — не ошибка:
+   * логаут идемпотентен (spec.md, 5.1), повтор или «чужая» cookie просто ничего не меняют.
+   * Состояние токена (истёк, отозван) не важно: семья в любом случае должна перестать работать.
+   */
+  async revokeFamilyOf(token: string): Promise<void> {
+    const session = await this.prisma.session.findUnique({
+      where: { tokenHash: hashRefreshToken(token) },
+      select: { familyId: true },
+    });
+    if (session) {
+      await this.revokeFamily(session.familyId, new Date());
+    }
+  }
+
   /** Отзывает все ещё действующие токены семьи. Уже отозванные не трогаем: их revokedAt — история. */
   private async revokeFamily(familyId: string, now: Date): Promise<void> {
     await this.prisma.session.updateMany({

@@ -113,6 +113,18 @@ export class AuthService {
     return this.issueAccessToken(user, rotated);
   }
 
+  /**
+   * Завершает сессию текущего устройства: отзывает семью refresh-токена (spec.md, 5.1).
+   * Без cookie — нечего отзывать, но это не ошибка: результат «я разлогинен» уже достигнут.
+   * Выданный access-токен продолжит работать до истечения (≤ 15 мин): JWT без состояния нельзя
+   * отозвать, не проверяя БД на каждом запросе. Это осознанная цена короткого TTL.
+   */
+  async logout(refreshToken: string | undefined): Promise<void> {
+    if (refreshToken !== undefined) {
+      await this.sessions.revokeFamilyOf(refreshToken);
+    }
+  }
+
   private async issueAccessToken(user: UserDto, refresh: IssuedRefreshToken): Promise<AuthResult> {
     const payload: AccessTokenPayload = { sub: user.id, role: user.role };
     return {

@@ -1,6 +1,10 @@
 import type { Request } from 'express';
 import { describe, expect, it } from 'vitest';
-import { readRefreshCookie } from './refresh-cookie.js';
+import {
+  clearRefreshCookieOptions,
+  readRefreshCookie,
+  refreshCookieOptions,
+} from './refresh-cookie.js';
 
 const requestWith = (cookies: unknown) => ({ cookies }) as unknown as Request;
 
@@ -18,5 +22,15 @@ describe('readRefreshCookie', () => {
     ['a non-string value', { refresh_token: { injected: true } }],
   ])('returns undefined for %s', (_case, cookies) => {
     expect(readRefreshCookie(requestWith(cookies))).toBeUndefined();
+  });
+});
+
+// Браузер удалит cookie, только если совпадёт Path; Express по умолчанию подставил бы '/'.
+describe('clearRefreshCookieOptions', () => {
+  it('targets the same cookie as the one that was set, without its own expiry', () => {
+    const { expires: _expires, ...setOptions } = refreshCookieOptions(new Date());
+
+    expect(clearRefreshCookieOptions()).toEqual(setOptions);
+    expect(clearRefreshCookieOptions()).toMatchObject({ path: '/auth' });
   });
 });
